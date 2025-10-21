@@ -1,0 +1,152 @@
+from dash import Dash, dcc, html, Input, Output
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+
+# ---------- Datos dummy ----------
+df_line = pd.DataFrame({
+    "Fecha": pd.date_range(start="2025-01-01", periods=10, freq="D"),
+    "Valor1": [10, 12, 9, 15, 13, 17, 14, 18, 16, 20],
+    "Valor2": [7, 9, 6, 10, 12, 11, 9, 13, 14, 12]
+})
+
+df_bar = pd.DataFrame({
+    "Categoría": ["A", "B", "C", "D"],
+    "Cantidad1": [20, 14, 23, 17],
+    "Cantidad2": [15, 18, 12, 20]
+})
+
+df_scatter = pd.DataFrame({
+    "Fecha": pd.date_range(start="2025-01-01", periods=10, freq="D"),
+    "X": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    "Y": [5, 7, 8, 5, 9, 12, 10, 11, 9, 13],
+    "Grupo": ["G1","G2","G1","G2","G1","G2","G1","G2","G1","G2"]
+})
+
+df_pie = pd.DataFrame({
+    "Sección": ["Rojo", "Azul", "Verde"],
+    "Valor": [30, 45, 25]
+})
+
+# ---------- Crear app ----------
+app = Dash(__name__)
+
+# ---------- Layout ----------
+app.layout = html.Div([
+    html.H1("Dashboard Interactivo con 4 Gráficos", style={'textAlign': 'center'}),
+
+    # --- 1. Gráfico de líneas con Dropdown ---
+    html.Div([
+        html.H3("Gráfico de Líneas"),
+        dcc.Dropdown(
+            id='dropdown_line',
+            options=[
+                {"label": "Valor 1", "value": "Valor1"},
+                {"label": "Valor 2", "value": "Valor2"}
+            ],
+            value="Valor1",
+            clearable=False
+        ),
+        dcc.Graph(id='graph_line')
+    ]),
+
+    html.Hr(),
+
+    # --- 2. Gráfico de barras con Checklist ---
+    html.Div([
+        html.H3("Gráfico de Barras"),
+        dcc.Checklist(
+            id='checklist_bar',
+            options=[
+                {"label": "Cantidad 1", "value": "Cantidad1"},
+                {"label": "Cantidad 2", "value": "Cantidad2"}
+            ],
+            value=["Cantidad1"],
+            inline=True
+        ),
+        dcc.Graph(id='graph_bar')
+    ]),
+
+    html.Hr(),
+
+    # --- 3. Gráfico de dispersión con DatePickerRange ---
+    html.Div([
+        html.H3("Gráfico de Dispersión"),
+        dcc.DatePickerRange(
+            id='date_scatter',
+            min_date_allowed=df_scatter['Fecha'].min(),
+            max_date_allowed=df_scatter['Fecha'].max(),
+            start_date=df_scatter['Fecha'].min(),
+            end_date=df_scatter['Fecha'].max()
+        ),
+        dcc.Graph(id='graph_scatter')
+    ]),
+
+    html.Hr(),
+
+    # --- 4. Gráfico de pastel con Slider ---
+    html.Div([
+        html.H3("Gráfico de Pastel"),
+        dcc.Slider(
+            id='slider_pie',
+            min=0,
+            max=50,
+            step=5,
+            value=0,
+            marks={i: str(i) for i in range(0, 51, 5)}
+        ),
+        dcc.Graph(id='graph_pie')
+    ])
+])
+
+# ---------- Callbacks ----------
+@app.callback(
+    Output('graph_line', 'figure'),
+    Input('dropdown_line', 'value')
+)
+def update_line(variable):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=df_line['Fecha'],
+        y=df_line[variable],
+        mode='lines+markers',
+        name=variable
+    ))
+    fig.update_layout(title=f"Gráfico de Líneas ({variable})")
+    return fig
+
+@app.callback(
+    Output('graph_bar', 'figure'),
+    Input('checklist_bar', 'value')
+)
+def update_bar(selected_cols):
+    fig = go.Figure()
+    for col in selected_cols:
+        fig.add_trace(go.Bar(x=df_bar['Categoría'], y=df_bar[col], name=col))
+    fig.update_layout(title="Gráfico de Barras")
+    return fig
+
+@app.callback(
+    Output('graph_scatter', 'figure'),
+    Input('date_scatter', 'start_date'),
+    Input('date_scatter', 'end_date')
+)
+def update_scatter(start, end):
+    start = pd.to_datetime(start)
+    end = pd.to_datetime(end)
+    df_filtered = df_scatter[(df_scatter['Fecha'] >= start) & (df_scatter['Fecha'] <= end)]
+    fig = px.scatter(df_filtered, x='X', y='Y', color='Grupo', title="Gráfico de Dispersión")
+    return fig
+
+@app.callback(
+    Output('graph_pie', 'figure'),
+    Input('slider_pie', 'value')
+)
+def update_pie(threshold):
+    df_filtered = df_pie[df_pie['Valor'] >= threshold]
+    fig = px.pie(df_filtered, names='Sección', values='Valor', title=f"Gráfico de Pastel (umbral >= {threshold})")
+    return fig
+
+# ---------- Ejecutar ----------
+if __name__ == '__main__':
+    app.run_server(debug=True)
