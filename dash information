@@ -1,0 +1,80 @@
+### ESTRUCTURALES
+- `dash.html`: Permite crear elementos HTML usando Python. Ppermite construir una interfaz web solo con Python, sin escribir directamente HTML.
+  - `html.Div()`: Representa un bloque contenedor. Es el elemento más usado en Dash, ya que sirve para agrupar otros componentes y organizar el layout (estructura visual).  Atributos comunes: `children`: lista de elementos dentro del Div
+  - `html.H1()`,`html.H2()`, `html.H3()`: Etiquetas de encabezado (Heading). Sirven para crear títulos y subtítulos con distintos tamaños.
+  - `html.P()`: Representa un párrafo de texto. Sirve para agregar explicaciones, descripciones o notas debajo de gráficos o encabezados.
+  - `html.Img()`: Inserta una imagen
+  - `html.Button()`: Crea un botón interactivo. No hace nada por sí solo, puedes conectarlo con un **callback** para ejecutar acciones (por ejemplo, actualizar un gráfico o cargar nuevos datos).
+  - `html.Hr()`: Linea horizontal para separar secciones.
+  - `html.Br()`: Salto de línea. Espaciado simple entre elementos.
+
+
+
+# 1. Crear la app
+app = Dash(__name__)
+ 
+# 2. Layout: estructura visual del dashboard
+app.layout = html.Div([ #Div1
+ 
+    # Encabezado principal
+    html.H1("Dashboard Estático con Componentes HTML",
+            style={'textAlign': 'center', 'color': '#2C3E50'}),
+ 
+    html.Hr(),  # Línea divisoria horizontal
+ 
+    # Titulo nivel 2
+    html.H2("Sección 1: Descripción General",
+            style={'color': '#34495E', 'marginTop': '20px'}),
+    #Parrafo
+    html.P("Este ejemplo muestra cómo estructurar un layout básico en Dash "
+           "utilizando exclusivamente elementos HTML del módulo `dash.html`.",
+           style={'fontSize': '18px', 'textAlign': 'justify', 'padding': '0 40px'}),
+    
+    html.Br(),  # Salto de línea
+ 
+    html.H3("Ejemplo de imagen:", style={'color': '#2E86C1'}), #Titulo 3
+ 
+    html.Img( #importacion de imagen
+        src="https://crai.ucompensar.edu.co/upanam/images/Logocomp.png",
+        style={'display': 'block', 'margin': 'auto', 'width': '200px'}
+    ),
+ 
+    html.Br(),
+ 
+    html.P("La imagen anterior es el logo de Dash, el framework de Python para "
+           "crear dashboards interactivos basados en Plotly y Flask.",
+           style={'textAlign': 'center', 'fontSize': '16px'}),
+ 
+    html.Hr(),
+ 
+    # Otra sección
+    html.H2("Sección 2: Interacción Simbólica"),
+    html.P("Aunque este ejemplo no usa callbacks, podemos incluir botones "
+           "que luego servirán para desencadenar acciones interactivas.",
+           style={'padding': '0 40px'}),
+ 
+    html.Br(),
+ 
+    html.Div([ #Div2
+        html.Button("Actualizar datos", id="btn-actualizar",
+                    style={'backgroundColor': '#1ABC9C', 'color': 'white',
+                           'border': 'none', 'padding': '10px 20px',
+                           'borderRadius': '8px', 'cursor': 'pointer'}),
+        html.Button("Descargar reporte", id="btn-descargar",
+                    style={'backgroundColor': '#3498DB', 'color': 'white',
+                           'border': 'none', 'padding': '10px 20px',
+                           'borderRadius': '8px', 'marginLeft': '10px',
+                           'cursor': 'pointer'})
+    ], style={'textAlign': 'center', 'marginTop': '20px'}),
+ 
+    html.Br(),
+    html.Br(),
+ 
+    html.Hr(),
+    html.P("© 2025 - Ejemplo creado en ETL - Ciencia de datos usando Python con Dash",
+           style={'textAlign': 'center', 'fontSize': '14px', 'color': 'gray'})
+])
+ 
+#3. Ejecutar el servidor
+if __name__ == "__main__":
+    app.run(jupyter_mode='tab')
