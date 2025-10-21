@@ -1,0 +1,121 @@
+app = Dash(__name__)
+
+# Opciones del dropdown (columnas numéricas)
+variables = [
+    {'label': 'Temperatura (°C)', 'value': 'temperature_2m'},
+    {'label': 'Humedad relativa (%)', 'value': 'relativehumidity_2m'},
+    {'label': 'Precipitación (mm)', 'value': 'precipitation'},
+    {'label': 'Radiación solar (W/m2)', 'value': 'shortwave_radiation'},
+    {'label': 'Cobertura de nubes (%)', 'value': 'cloudcover'},
+    {'label': 'Punto de rocío (°C)', 'value': 'dewpoint_2m'}
+]
+
+# Layout 
+app.layout = html.Div([
+    html.H1("Dashboard Climático - Open Meteo", style={'textAlign': 'center'}),
+
+    html.P("Selecciona dos variables para comparar:"),
+    dcc.Dropdown(
+        id='dropdown_vars',
+        options=variables,
+        value=['temperature_2m', 'relativehumidity_2m'],
+        multi=True,
+        clearable=False
+    ),
+
+    html.Br(),
+    html.P("Selecciona el rango de fechas:"),
+    dcc.DatePickerRange(
+        id='date_range',
+        min_date_allowed=df['time'].min().date(),
+        max_date_allowed=df['time'].max().date(),
+        start_date=df['time'].min().date(),
+        end_date=df['time'].max().date()
+    ),
+
+    html.Br(), html.Hr(),
+
+    dcc.Graph(id='graph_climate'),
+    
+    
+    dcc.Graph(
+        id='graph_extra',
+        figure=go.Figure(
+            data=[go.Bar(x=['A', 'B', 'C'], y=[10, 5, 8])],
+            layout=go.Layout(title="Gráfico independiente fijo")
+        )
+    )
+])
+
+# Callback 
+@app.callback(
+    Output('graph_climate', 'figure'),
+    Input('dropdown_vars', 'value'),
+    Input('date_range', 'start_date'),
+    Input('date_range', 'end_date')
+)
+def actualizar_grafico(selected_vars, fecha_inicio, fecha_fin):
+    # Validar que haya exactamente 2 variables seleccionadas
+    if not selected_vars or len(selected_vars) < 2:
+        fig_empty = go.Figure()
+        fig_empty.update_layout(
+            title="Por favor selecciona exactamente 2 variables",
+            xaxis_title="Fecha y hora"
+        )
+        return fig_empty
+    # Tomar solo las primeras 2 variables si hay más seleccionadas
+    var_y1, var_y2 = selected_vars[0], selected_vars[1]
+    
+    # Filtrar el DataFrame según las fechas seleccionadas
+    fecha_inicio = pd.to_datetime(fecha_inicio)
+    fecha_fin = pd.to_datetime(fecha_fin)
+    df_filtrado = df[(df['time'] >= fecha_inicio) & (df['time'] <= fecha_fin)].copy()
+
+    # Si el filtrado queda vacío, devolver una figura vacía con mensaje
+    if df_filtrado.empty:
+        fig_empty = go.Figure()
+        fig_empty.update_layout(
+            title="No hay datos en el rango seleccionado",
+            xaxis_title="Fecha y hora"
+        )
+        return fig_empty
+
+    # Crear figura con eje secundario
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    # Y1 (izquierda)
+    fig.add_trace(
+        go.Scatter(x=df_filtrado['time'], y=df_filtrado[var_y1], name=var_y1, mode='lines+markers'),
+        secondary_y=False
+    )
+
+    # Y2 (derecha)
+    fig.add_trace(
+        go.Scatter(x=df_filtrado['time'], y=df_filtrado[var_y2], name=var_y2, mode='lines+markers'),
+        secondary_y=True
+    )
+
+  
+
+    return fig
+
+
+    # # Crear un gráfico de dispersión (scatter)
+    # fig = px.scatter(
+    #     df_filtrado,
+    #     x='time',
+    #     y=var_y,
+    #     color='time',  # colorear según el tiempo (da idea del cambio temporal)
+    #     title=f"Relación entre {var_x} y {var_y}",
+    #     labels={
+    #         var_x: var_x.replace("_", " ").capitalize(),
+    #         var_y: var_y.replace("_", " ").capitalize(),
+    # #     }
+    # # )
+
+    # fig.update_layout(template='plotly_white')
+    # return fig
+
+# Ejecutar
+if __name__ == '__main__':
+    app.run(jupyter_mode="external")
