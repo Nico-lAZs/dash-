@@ -1,0 +1,86 @@
+import plotly.express as px
+from dash import Dash, html, dcc, dash_table
+import pandas as pd 
+import requests
+
+
+dias = 15
+crypto = "ethereum"
+
+url = f"https://api.coingecko.com/api/v3/coins/{crypto}/market_chart"
+params = {"vs_currency": "usd", "days": dias}
+
+
+
+response=requests.get(url,params=params)
+data=response.json()
+
+# mirando la lista de claves de la api 
+print("keys in response:", list(data.keys()))
+
+
+print(type(data["prices"][0])) #if its "list" i need to rename columns  if its not "dict" it comes with column names
+
+P = pd.json_normalize(data, record_path=["prices"]).rename(columns={0:"timestamp", 1:"price"})
+m = pd.json_normalize(data, record_path=["market_caps"]).rename(columns={0:"timestamp", 1:"market_cap"})
+v = pd.json_normalize(data, record_path=["total_volumes"]).rename(columns={0:"timestamp", 1:"volume"})
+
+gecko=P.merge(m,on='timestamp',how='inner')\
+    .merge(v,on='timestamp',how='inner')
+
+
+    -------------------------------------------------------------------------------------------
+    # URL base de la API
+url = "https://api.open-meteo.com/v1/forecast"
+ 
+# Parámetros de la solicitud
+params = {
+    "latitude": 4.71,
+    "longitude": -74.07,
+    "hourly": "temperature_2m,relativehumidity_2m,precipitation,shortwave_radiation,cloudcover,dewpoint_2m",
+    "timezone": "auto",
+     "past_days": 1,
+    "forecast_days": 2
+}
+ 
+# Realizar la solicitud
+response = requests.get(url, params=params)
+datos = response.json()
+
+print("keys in response:", list(datos.keys()))
+
+print(type(datos['hourly']))
+hourly = pd.DataFrame(datos['hourly'])
+hourly
+
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+
+# Primer subgráfico: temperature_2m	
+axes[0, 0].scatter(hourly['temperature_2m'], hourly['relativehumidity_2m'], label='temperature_2m--relativehumidity_2m')
+axes[0, 0].set_title('temperature_2m--relativehumidity_2m')
+axes[0, 0].legend()
+
+# Segundo subgráfico: relativehumidity_2m
+axes[0, 1].scatter(hourly['precipitation'],hourly['cloudcover'], label='precipitation--cloudcover', color='orange')
+axes[0, 1].set_title('precipitation--cloudcover')
+axes[0, 1].legend()
+
+# Tercer subgráfico: cloudcover
+axes[1, 0].scatter(hourly['shortwave_radiation'],hourly['temperature_2m'], label='shortwave_radiation--temperature_2m', color='green')
+axes[1, 0].set_ylim(-10, 10)  # Limitar el rango para evitar el desbordamiento en tangente
+axes[1, 0].set_title('shortwave_radiation--temperature_2m')
+axes[1, 0].legend()
+ 
+# Cuarto subgráfico: Exponencial
+axes[1, 1].scatter(hourly['relativehumidity_2m'],hourly['dewpoint_2m'], label='dewpoint_2m---relativehumidity_2m', color='red')
+axes[1, 1].set_title('relativehumidity_2m---dewpoint_2m')
+axes[1, 1].legend()
+
+plt.tight_layout()
+ 
+# Mostrar el gráfico
+plt.show()
+
+    
